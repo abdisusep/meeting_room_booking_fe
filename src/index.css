@@ -1,0 +1,16 @@
+.btn, .card, .form-control, .list-group, .swal2-confirm, .swal2-cancel, .swal2-popup {
+  border-radius: 12px !important;
+}
+
+.btn, .form-control, .swal2-confirm, .swal2-cancel {
+  box-shadow: none !important;
+}
+
+a.list-group-item:hover {
+  color: blue !important;
+  font-weight: 500 !important;
+}
+
+.logout{
+  cursor: pointer !important;
+}

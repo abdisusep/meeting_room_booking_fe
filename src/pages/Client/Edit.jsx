@@ -1,9 +1,85 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useParams } from "react-router-dom";
+import Swal from 'sweetalert2';
+import axios from 'axios';
+
 import Sidebar from '../../components/Sidebar';
 
 function Edit() {
-  const handleSubmit = () => {
+  let { id } = useParams();
 
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [credit, setCredit] = useState('');
+
+  const navigate = useNavigate();
+
+  const baseUrl = 'http://localhost:3000/api';
+  const token = localStorage.getItem("access_token");
+
+  useEffect(() => {
+    if (!token) {
+      navigate("/");
+    } else {
+      fetchDataDetail();
+    }
+  }, [token]);
+
+  const fetchDataDetail = () => {
+    axios.get(`${baseUrl}/clients/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    .then(response => {
+      setName(response.data.name);
+      setEmail(response.data.email);
+      setPhone(response.data.phone);
+      setCredit(response.data.credit);
+    })
+    .catch(error => {
+      console.error('Error fetching data: ', error);
+    });
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (name === '' || email === '' || phone === '' || credit === '') {
+      Swal.fire({
+        title: "Input required!",
+        text: "",
+        icon: "warning",
+      });
+      return;
+    }
+
+    try {
+      const response = await axios.put(`${baseUrl}/clients/${id}`, {
+        name, email, phone, credit
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data.success) {
+        Swal.fire({
+          title: "Successfull",
+          text: "",
+          icon: "success",
+        });
+        navigate('/client');
+      }
+    } catch (error) {
+      Swal.fire({
+        title: "Failed!",
+        text: error.message,
+        icon: "warning",
+      });
+    }
   }
 
   return (
@@ -24,25 +100,25 @@ function Edit() {
                   <div className="mb-3 row">
                     <label className="col-sm-2">Name</label>
                     <div className="col-sm-10">
-                      <input type="text" className="form-control"/>
+                      <input type="text" className="form-control" value={name} onChange={(e) => setName(e.target.value)}/>
                     </div>
                   </div>
                   <div className="mb-3 row">
                     <label className="col-sm-2">Email</label>
                     <div className="col-sm-10">
-                      <input type="email" className="form-control"/>
+                      <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)}/>
                     </div>
                   </div>
                   <div className="mb-3 row">
                     <label className="col-sm-2">Phone</label>
                     <div className="col-sm-10">
-                      <input type="text" className="form-control"/>
+                      <input type="text" className="form-control" value={phone} onChange={(e) => setPhone(e.target.value)}/>
                     </div>
                   </div>
                   <div className="mb-3 row">
                     <label className="col-sm-2">Credit</label>
                     <div className="col-sm-10">
-                      <input type="number" className="form-control"/>
+                      <input type="number" className="form-control" value={credit} onChange={(e) => setCredit(e.target.value)}/>
                     </div>
                   </div>
                   <div className="mb-3 row">

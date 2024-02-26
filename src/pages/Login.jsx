@@ -1,40 +1,52 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
+import Swal from 'sweetalert2';
+import axios from 'axios';
 
 function Login() {
 
-  const isLogin = true;
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState('jarakal@dota.com');
   const [password, setPassword] = useState('');
   
   const navigate = useNavigate();
 
+  const baseUrl = 'http://localhost:3000/api';
+  const token = localStorage.getItem("access_token");
+
   useEffect(() => {
-    if(isLogin) {
-      navigate('/dashboard');
+    if (token) {
+      navigate("/dashboard");
     }
-  }, []);
+  });
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
-    navigate('/dashboard');
-    // try {
-    //   const response = await axios.post('http://example.com/login', {
-    //     email, password
-    //   });
+    if (email === '' || password === '') {
+      Swal.fire({
+        title: "Email & password required!",
+        text: "",
+        icon: "warning",
+      });
+      return;
+    }
+    
+    try {
+      const response = await axios.post(`${baseUrl}/login`, {
+        email, password
+      });
 
-    //   // Mengambil token dari respons server
-    //   const { token } = response.data;
-
-    //   // Menyimpan token ke localStorage
-    //   localStorage.setItem('token', token);
-
-    //   // Redirect atau update UI ke halaman beranda, misalnya
-    //   window.location.href = '/home';
-    // } catch (error) {
-    //   console.error(error);
-    // }
+      if (response.data.success) {
+        localStorage.setItem("access_token", response.data.token);
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      Swal.fire({
+        title: "Email & password invalid!",
+        text: "",
+        icon: "warning",
+      });
+    }
   }
 
   return (
@@ -51,13 +63,13 @@ function Login() {
                   <div className="mb-3 row">
                     <label className="col-sm-3">Email</label>
                     <div className="col-sm-9">
-                      <input type="email" className="form-control"/>
+                      <input type="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)}/>
                     </div>
                   </div>
                   <div className="mb-3 row">
                     <label className="col-sm-3">Password</label>
                     <div className="col-sm-9">
-                      <input type="Password" className="form-control"/>
+                      <input type="password" className="form-control" value={password} onChange={(e) => setPassword(e.target.value)}/>
                     </div>
                   </div>
                   <div className="mb-3 row">

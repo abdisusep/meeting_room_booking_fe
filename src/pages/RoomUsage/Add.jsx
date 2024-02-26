@@ -2,8 +2,61 @@ import { Link, useNavigate } from "react-router-dom";
 import Sidebar from '../../components/Sidebar';
 
 function Add() {
-  const handleSubmit = () => {
-    
+  const [clientId, setClientId] = useState('');
+  const [roomId, setRoomId] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [bookingDate, setBookingDate] = useState('');
+  const [quotaUsed, setQuotaUsed] = useState('');
+
+  const navigate = useNavigate();
+
+  const baseUrl = 'http://localhost:3000/api';
+  const token = localStorage.getItem("access_token");
+
+  useEffect(() => {
+    if (!token) {
+      navigate("/");
+    }
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (name === '' || cost === '') {
+      Swal.fire({
+        title: "Input required!",
+        text: "",
+        icon: "warning",
+      });
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${baseUrl}/room_usages`, {
+        clientId, roomId, startTime, endTime, bookingDate, quotaUsed
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data.success) {
+        Swal.fire({
+          title: "Successfull",
+          text: "",
+          icon: "success",
+        });
+        navigate('/room');
+      }
+    } catch (error) {
+      Swal.fire({
+        title: "Failed!",
+        text: error.message,
+        icon: "warning",
+      });
+    }
   }
 
   return (

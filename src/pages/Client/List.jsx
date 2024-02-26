@@ -1,11 +1,43 @@
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from "react-router-dom";
-import Swal from 'sweetalert2'
+import Swal from 'sweetalert2';
+import axios from 'axios';
 
 import Sidebar from '../../components/Sidebar';
 
 function List() {
 
-  const handleDelete = (id) => {
+  const [data, setData] = useState([]);
+  const navigate = useNavigate();
+
+  const baseUrl = 'http://localhost:3000/api';
+  const token   = localStorage.getItem("access_token");
+
+  useEffect(() => {
+    if (!token) {
+      navigate("/");
+    }
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    await axios.get(`${baseUrl}/clients`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    .then(response => {
+      setData(response.data);
+    })
+    .catch(error => {
+      console.error('Error fetching data: ', error);
+    });
+  }
+
+  const handleDelete = async (id) => {
     Swal.fire({
       title: "Delete Client?",
       text: "",
@@ -16,7 +48,18 @@ function List() {
       confirmButtonText: "Yes, delete"
     }).then((result) => {
       if (result.isConfirmed) {
-        navigate('/client');
+        axios.delete(`${baseUrl}/clients/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        .then(response => {
+          fetchData();
+          navigate('/client');
+        })
+        .catch(error => {
+          console.error(`Error deleting item with ID ${id}: `, error);
+        });
       }
     });
   }
@@ -35,7 +78,7 @@ function List() {
               </div>
               <div className="card-body">
                 <Link to="/client/add" className="btn btn-primary btn-sm mb-3">Add</Link>
-                <table class="table table-striped table-hover">
+                <table className="table table-striped table-hover">
                   <thead>
                     <tr>
                       <th>No</th>
@@ -47,18 +90,20 @@ function List() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td>1</td>
-                      <td>PT ABC</td>
-                      <td>adhaj@email.com</td>
-                      <td>+6123678123</td>
-                      <td>10</td>
+                  {data.map((item, index) => (
+                    <tr key={item.id}>
+                      <td>{index+1}</td>
+                      <td>{item.name}</td>
+                      <td>{item.email}</td>
+                      <td>{item.phone}</td>
+                      <td>{item.credit}</td>
                       <td>
-                        <Link to="/client/edit/1" className="btn btn-warning btn-sm me-1">Edit</Link>
-                        <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDelete(1)}>Delete</button>
+                        <Link to={`/client/edit/${item.id}`} className="btn btn-warning btn-sm me-1">Edit</Link>
+                        <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)}>Delete</button>
                       </td>
                     </tr>
-                  </tbody>
+                  ))}
+                </tbody>
                 </table>
               </div>
             </div>

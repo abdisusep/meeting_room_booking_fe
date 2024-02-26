@@ -1,9 +1,42 @@
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import Swal from 'sweetalert2';
+import axios from 'axios';
+import moment from 'moment';
 
 import Sidebar from '../../components/Sidebar';
 
 function List() {
+
+  const [data, setData] = useState([]);
+  const navigate = useNavigate();
+
+  const baseUrl = 'http://localhost:3000/api';
+  const token   = localStorage.getItem("access_token");
+
+  useEffect(() => {
+    if (!token) {
+      navigate("/");
+    }
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    await axios.get(`${baseUrl}/room_usages`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    .then(response => {
+      setData(response.data);
+    })
+    .catch(error => {
+      console.error('Error fetching data: ', error);
+    });
+  }
 
   const handleDelete = (id) => {
     Swal.fire({
@@ -35,7 +68,7 @@ function List() {
               </div>
               <div className="card-body">
                 <Link to="/room_usage/add" className="btn btn-primary btn-sm mb-3">Add</Link>
-                <table class="table table-striped table-hover">
+                <table className="table table-striped table-hover">
                   <thead>
                     <tr>
                       <th>No</th>
@@ -45,23 +78,39 @@ function List() {
                       <th>End Time</th>
                       <th>Date Booking</th>
                       <th>Quota</th>
+                      <th>Cost</th>
                       <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td>1</td>
-                      <td>PT ABC</td>
-                      <td>adhaj@email.com</td>
-                      <td>+6123678123</td>
-                      <td>10</td>
-                      <td>10</td>
-                      <td>10</td>
-                      <td>
-                        <Link to="/room_usage/edit/1" className="btn btn-warning btn-sm me-1">Edit</Link>
-                        <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDelete(1)}>Delete</button>
-                      </td>
-                    </tr>
+                    {data.map((item, index) => {
+                      const startMoment = moment(item.startTime, 'HH:mm');
+                      const endMoment = moment(item.endTime, 'HH:mm');
+                      const duration = moment.duration(endMoment.diff(startMoment));
+                      const hours = duration.asMinutes() / 60;
+                      const cost = item.Room.costPerHour * hours;
+
+                      console.log('Cost per hour:', item.Room.costPerHour);
+                      console.log('Hours:', hours);
+                      console.log('Cost:', cost);
+
+                      return (
+                        <tr key={item.id}>
+                        <td>{index+1}</td>
+                        <td>{item.Client.name}</td>
+                        <td>{item.Room.roomName}</td>
+                        <td>{item.startTime}</td>
+                        <td>{item.endTime}</td>
+                        <td>{item.bookingDate}</td>
+                        <td>{item.quotaUsed}</td>
+                        <td>{cost}</td>
+                        <td>
+                          <Link to={`/room_usage/edit/${item.id}`} className="btn btn-warning btn-sm me-1">Edit</Link>
+                          <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)}>Delete</button>
+                        </td>
+                      </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

@@ -1,11 +1,43 @@
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import Swal from 'sweetalert2';
+import axios from 'axios';
 
 import Sidebar from '../../components/Sidebar';
 
 function List() {
 
-   const handleDelete = (id) => {
+  const [data, setData] = useState([]);
+  const navigate = useNavigate();
+
+  const baseUrl = 'http://localhost:3000/api';
+  const token   = localStorage.getItem("access_token");
+
+  useEffect(() => {
+    if (!token) {
+      navigate("/");
+    }
+  });
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    await axios.get(`${baseUrl}/rooms`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    .then(response => {
+      setData(response.data);
+    })
+    .catch(error => {
+      console.error('Error fetching data: ', error);
+    });
+  }
+
+  const handleDelete = (id) => {
     Swal.fire({
       title: "Delete Room?",
       text: "",
@@ -16,7 +48,18 @@ function List() {
       confirmButtonText: "Yes, delete"
     }).then((result) => {
       if (result.isConfirmed) {
-        navigate('/room');
+        axios.delete(`${baseUrl}/rooms/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        .then(response => {
+          fetchData();
+          navigate('/room');
+        })
+        .catch(error => {
+          console.error(`Error deleting item with ID ${id}: `, error);
+        });
       }
     });
   }
@@ -35,7 +78,7 @@ function List() {
               </div>
               <div className="card-body">
                 <Link to="/room/add" className="btn btn-primary btn-sm mb-3">Add</Link>
-                <table class="table table-striped table-hover">
+                <table className="table table-striped table-hover">
                   <thead>
                     <tr>
                       <th>No</th>
@@ -45,15 +88,17 @@ function List() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td>1</td>
-                      <td>Meet 1</td>
-                      <td>5</td>
+                    {data.map((item, index) => (
+                    <tr key={item.id}>
+                      <td>{index+1}</td>
+                      <td>{item.roomName}</td>
+                      <td>{item.costPerHour}</td>
                       <td>
-                        <Link to="/room/edit/1" className="btn btn-warning btn-sm me-1">Edit</Link>
-                        <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDelete(1)}>Delete</button>
+                        <Link to={`/room/edit/${item.id}`} className="btn btn-warning btn-sm me-1">Edit</Link>
+                        <button type="button" className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)}>Delete</button>
                       </td>
                     </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>

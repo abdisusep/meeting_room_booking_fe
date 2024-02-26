@@ -16,6 +16,7 @@ function Sidebar() {
       confirmButtonText: "Yes, logout"
     }).then((result) => {
       if (result.isConfirmed) {
+        localStorage.removeItem('access_token');
         navigate('/');
       }
     });
@@ -23,7 +24,7 @@ function Sidebar() {
 
   return (
     <>
-      <ul class="list-group">
+      <ul className="list-group">
         <li className="list-group-item fw-bold">MENU</li>
         <Link to="/dashboard" className="list-group-item">Dashboard</Link>
         <Link to="/client" className="list-group-item">Client</Link>
